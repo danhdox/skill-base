@@ -1,4 +1,4 @@
-# skill-base
+# Skill Base
 
 Open-source skills for AI agents.
 
