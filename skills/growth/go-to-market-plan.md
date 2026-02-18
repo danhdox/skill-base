@@ -2,163 +2,153 @@
 
 ## Purpose
 
-This skill provides a structured framework for creating launch strategy, channel sequencing, and messaging for new offerings. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill produces a launch-ready GTM plan covering audience targeting, channel strategy, messaging, timeline, and success metrics.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `product_name` | string | Yes | Product or feature being launched | Non-empty string |
+| `target_segments` | array | Yes | Customer segments to target | At least 1 segment |
+| `value_proposition` | string | Yes | Core promise to customers | Non-empty string |
+| `launch_window` | string | Yes | Planned launch timeframe | Non-empty string |
+| `channels` | array | No | Distribution and acquisition channels | Optional but recommended |
+| `budget_usd` | number | No | Campaign and launch budget | Must be >= 0 |
+| `regional_constraints` | array | No | Compliance or operational limits by region | Optional |
 
 ## Output Format
 
 ```json
 {
-  "go_to_market_plan": {
-    "artifact_type": "gtm_plan",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+  "gtm_plan": {
+    "positioning": {
+      "primary_message": "Fastest path from setup to measurable value",
+      "proof_points": [
+        "2-day onboarding",
+        "SOC2 and SSO ready"
+      ]
+    },
+    "channel_plan": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "channel": "product-led",
+        "objective": "activation",
+        "owner": "growth-pm"
+      },
+      {
+        "channel": "partner",
+        "objective": "pipeline",
+        "owner": "alliances"
       }
     ],
-    "risks": [
+    "launch_milestones": [
       {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
+        "name": "beta",
+        "date": "2026-04-01"
+      },
+      {
+        "name": "general-availability",
+        "date": "2026-05-15"
       }
+    ],
+    "success_metrics": [
+      "trial_to_paid",
+      "CAC_payback_months",
+      "activation_rate"
+    ],
+    "risk_register": [
+      "Message confusion between SMB and enterprise segments"
     ]
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "execution_status": "draft_ready_for_review"
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Segment Clarity**: Plans without explicit target segments should be marked incomplete.
+- **Channel Capacity**: Channel recommendations must respect team execution bandwidth.
+- **Positioning Consistency**: Messaging should align with actual product capabilities at launch.
+- **Metric Ownership**: Every core KPI should have a named owner.
+- **Regional Readiness**: Geo expansion assumptions require legal and operational confirmation.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: New Analytics Module Launch
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "product_name": "Insights Hub",
+  "target_segments": [
+    "mid-market SaaS",
+    "enterprise operations"
+  ],
+  "value_proposition": "Reduce reporting cycle from days to minutes",
+  "launch_window": "Q2 2026",
+  "channels": [
+    "in-product upsell",
+    "lifecycle email",
+    "sales enablement"
+  ],
+  "budget_usd": 120000,
+  "regional_constraints": [
+    "EU data residency messaging required"
+  ]
 }
 ```
 
 **Output**:
 ```json
 {
-  "go_to_market_plan": {
-    "artifact_type": "gtm_plan",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
+  "gtm_plan": {
+    "success_metrics": [
+      "attach_rate",
+      "pipeline_influenced",
+      "activation_rate"
     ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
-      }
-    ]
+    "execution_owner": "growth-director"
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "execution_status": "approved_for_execution"
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: Vertical-Specific Packaging Release
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "product_name": "Compliance Add-on",
+  "target_segments": [
+    "healthcare",
+    "finserv"
+  ],
+  "value_proposition": "Audit-ready workflows with minimal setup",
+  "launch_window": "August 2026",
+  "channels": [
+    "partner webinars",
+    "ABM campaigns"
+  ],
+  "budget_usd": 85000,
+  "regional_constraints": [
+    "HIPAA claims review",
+    "state-level disclosures"
+  ]
 }
 ```
 
 **Output**:
 ```json
 {
-  "go_to_market_plan": {
-    "artifact_type": "gtm_plan",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
-      }
+  "gtm_plan": {
+    "risk_register": [
+      "Partner training lead time may delay pipeline activation"
     ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
-      }
+    "success_metrics": [
+      "SQL_volume",
+      "win_rate",
+      "sales_cycle_days"
     ]
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "execution_status": "needs_dependency_alignment"
 }
 ```

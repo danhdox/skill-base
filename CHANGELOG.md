@@ -8,7 +8,11 @@ This project follows Keep a Changelog principles and Semantic Versioning.
 
 ### Added
 
-- Placeholder for upcoming changes.
+- Hardened 25 newly added skills with domain-specific inputs, outputs, constraints, and realistic invocation examples.
+
+### Changed
+
+- Improved content depth and practical guidance across engineering, data, growth, legal, onchain, product, security, ops, finance, and design skill additions.
 
 ## [1.0.0] - 2026-02-18
 

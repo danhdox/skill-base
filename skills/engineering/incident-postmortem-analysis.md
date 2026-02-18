@@ -2,163 +2,163 @@
 
 ## Purpose
 
-This skill provides a structured framework for turning incident timelines into root-cause findings and prevention actions. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill converts incident evidence into a structured postmortem with root-cause analysis, corrective actions, and prevention metrics. It is designed for blameless analysis and repeatable reliability improvements.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `incident_id` | string | Yes | Unique identifier for the incident | Non-empty string |
+| `incident_timeline` | array | Yes | Chronological event timeline | At least 3 timestamped events |
+| `customer_impact` | string | Yes | User-facing impact summary | Describe scope and duration |
+| `systems_involved` | array | Yes | Services/components involved | At least 1 service |
+| `detection_and_response` | object | No | How incident was detected and handled | Include alert source and response times when known |
+| `known_contributing_factors` | array | No | Initial hypotheses or contributing conditions | Optional, can be empty |
 
 ## Output Format
 
 ```json
 {
-  "incident_postmortem_analysis": {
-    "artifact_type": "postmortem_report",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+  "postmortem_analysis": {
+    "severity": "SEV-2",
+    "root_causes": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "category": "change-management",
+        "description": "Unreviewed config toggle bypassed safeguard"
       }
     ],
-    "risks": [
+    "contributing_factors": [
+      "Alert threshold too permissive",
+      "Runbook lacked rollback decision tree"
+    ],
+    "corrective_actions": [
       {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
+        "id": "PM-12",
+        "owner": "platform-team",
+        "priority": "high",
+        "due_date": "2026-03-15"
       }
-    ]
+    ],
+    "prevention_metrics": [
+      "MTTD",
+      "MTTR",
+      "repeat-incident rate"
+    ],
+    "postmortem_status": "action_items_open"
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "executive_summary": "Primary root cause identified with high confidence; prevention work is in progress."
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Blameless Standard**: Focus on system conditions and decisions, not individual blame.
+- **Evidence Requirement**: Root causes must be traceable to timeline evidence.
+- **Actionability**: Corrective actions must be owner-assigned and time-bound.
+- **Scope Boundaries**: Include only incident-relevant systems unless dependencies are proven.
+- **Learning Loop**: Close the postmortem only when follow-up actions are tracked to completion.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: Payments API Latency Incident
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "incident_id": "INC-2026-014",
+  "incident_timeline": [
+    "09:12 UTC: deploy started",
+    "09:19 UTC: latency alerts fired",
+    "09:28 UTC: rollback completed"
+  ],
+  "customer_impact": "Checkout failures rose to 8% for 16 minutes in NA region",
+  "systems_involved": [
+    "payments-api",
+    "redis-cache",
+    "feature-flag-service"
+  ],
+  "detection_and_response": {
+    "detection": "synthetic monitor",
+    "first_response_minutes": 4
+  },
+  "known_contributing_factors": [
+    "Cache key cardinality spike"
+  ]
 }
 ```
 
 **Output**:
 ```json
 {
-  "incident_postmortem_analysis": {
-    "artifact_type": "postmortem_report",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
+  "postmortem_analysis": {
+    "severity": "SEV-2",
+    "root_causes": [
       {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
+        "category": "capacity-planning",
+        "description": "New query path caused hot-key amplification in cache"
       }
     ],
-    "risks": [
+    "corrective_actions": [
       {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
+        "id": "PM-14",
+        "owner": "payments-team",
+        "priority": "high",
+        "due_date": "2026-03-05"
       }
-    ]
+    ],
+    "postmortem_status": "action_items_open"
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "executive_summary": "Incident is understood and immediate mitigations are in place."
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: Identity Provider Degradation
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "incident_id": "INC-2026-021",
+  "incident_timeline": [
+    "14:01 UTC: login error rate increased",
+    "14:07 UTC: external IdP status page reported degradation",
+    "14:31 UTC: failover policy enabled"
+  ],
+  "customer_impact": "SSO login unavailable for enterprise tenants for 30 minutes",
+  "systems_involved": [
+    "auth-gateway",
+    "idp-adapter"
+  ],
+  "detection_and_response": {
+    "detection": "error-rate SLO burn alert",
+    "first_response_minutes": 3
+  },
+  "known_contributing_factors": [
+    "No tested failover runbook for SSO-only tenants"
+  ]
 }
 ```
 
 **Output**:
 ```json
 {
-  "incident_postmortem_analysis": {
-    "artifact_type": "postmortem_report",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
+  "postmortem_analysis": {
+    "severity": "SEV-1",
+    "root_causes": [
       {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
+        "category": "resilience",
+        "description": "Failover path existed but was not operationally exercised"
       }
     ],
-    "risks": [
+    "corrective_actions": [
       {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
+        "id": "PM-19",
+        "owner": "identity-team",
+        "priority": "critical",
+        "due_date": "2026-02-28"
       }
-    ]
+    ],
+    "postmortem_status": "pending_leadership_review"
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "executive_summary": "Critical reliability gap identified; resiliency program escalated."
 }
 ```

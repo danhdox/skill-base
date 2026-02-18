@@ -2,78 +2,80 @@
 
 ## Purpose
 
-This skill provides a structured framework for evaluating API surface area, consistency, and long-term maintainability before implementation. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill performs a pre-implementation design review for APIs to catch consistency, usability, security, and versioning issues before code is shipped. It helps teams avoid expensive interface rewrites and improves long-term developer experience.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `api_style` | string | Yes | API style under review | Valid values: "REST", "GraphQL", "gRPC", "event-driven" |
+| `api_spec` | string | Yes | OpenAPI/GraphQL schema/protobuf summary | Non-empty string or linked spec excerpt |
+| `consumer_types` | array | Yes | Primary API consumers | At least 1 item (e.g., web, mobile, partner) |
+| `auth_model` | string | No | Authentication/authorization approach | Default: "unspecified" |
+| `versioning_strategy` | string | No | Versioning and deprecation policy | Describe timeline and compatibility guarantees |
+| `non_functional_requirements` | array | No | Latency, reliability, and throughput goals | Each item should be measurable |
 
 ## Output Format
 
 ```json
 {
   "api_design_review": {
-    "artifact_type": "api_spec",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+    "overall_status": "needs_changes",
+    "design_score": 72,
+    "strengths": [
+      "Resource naming is consistent",
+      "Error envelope is mostly standardized"
+    ],
+    "findings": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "severity": "high",
+        "area": "versioning",
+        "issue": "Breaking field rename without migration window",
+        "recommendation": "Ship additive field first, deprecate old field over two minor versions"
       }
     ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
-      }
-    ]
+    "compatibility_notes": [
+      "Partner SDK impact requires coordination"
+    ],
+    "release_readiness": "blocked_on_high_findings"
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
+  "open_questions": [
+    "Should rate-limit quotas differ by tenant tier?"
   ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "next_steps": [
+    "Address high findings",
+    "Re-review before implementation freeze"
+  ]
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Interface Focus**: This skill reviews API contract quality, not implementation code correctness.
+- **Spec Quality Dependency**: Missing or stale API specs reduce confidence and must be flagged.
+- **Consumer Context Required**: Recommendations may be misleading if consumer types are omitted.
+- **Policy Alignment**: Security and data retention requirements should reference organization policy, not guessed defaults.
+- **Backward Compatibility**: Breaking changes must include migration guidance to be considered acceptable.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: REST API Before Public Beta
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "api_style": "REST",
+  "api_spec": "OpenAPI v3 spec for Billing and Invoices endpoints",
+  "consumer_types": [
+    "web",
+    "partner"
+  ],
+  "auth_model": "OAuth2 client credentials",
+  "versioning_strategy": "URI versioning with 6-month deprecation window",
+  "non_functional_requirements": [
+    "p95 < 300ms",
+    "99.9% success rate"
+  ]
 }
 ```
 
@@ -81,49 +83,41 @@ This skill provides a structured framework for evaluating API surface area, cons
 ```json
 {
   "api_design_review": {
-    "artifact_type": "api_spec",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
+    "overall_status": "needs_changes",
+    "design_score": 78,
+    "findings": [
       {
         "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
+        "area": "pagination",
+        "issue": "Inconsistent cursor format across list endpoints",
+        "recommendation": "Adopt a shared cursor schema and examples in docs"
       }
-    ]
+    ],
+    "release_readiness": "ready_after_medium_findings"
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "next_steps": [
+    "Unify pagination schema",
+    "Add partner migration notes"
+  ]
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: gRPC Internal Platform API
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "api_style": "gRPC",
+  "api_spec": "protobuf services for authz and entitlements",
+  "consumer_types": [
+    "backend-services"
+  ],
+  "auth_model": "mTLS + workload identity",
+  "versioning_strategy": "field-level additive evolution",
+  "non_functional_requirements": [
+    "p99 < 120ms",
+    "10k RPS burst"
+  ]
 }
 ```
 
@@ -131,34 +125,20 @@ This skill provides a structured framework for evaluating API surface area, cons
 ```json
 {
   "api_design_review": {
-    "artifact_type": "api_spec",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
+    "overall_status": "approved_with_notes",
+    "design_score": 88,
+    "findings": [
       {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
+        "severity": "low",
+        "area": "observability",
+        "issue": "Missing correlation-id guidance",
+        "recommendation": "Add standard metadata key and tracing requirement"
       }
     ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
-      }
-    ]
+    "release_readiness": "approved"
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "next_steps": [
+    "Document tracing metadata in platform handbook"
+  ]
 }
 ```

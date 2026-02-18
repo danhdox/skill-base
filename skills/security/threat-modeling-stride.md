@@ -2,163 +2,146 @@
 
 ## Purpose
 
-This skill provides a structured framework for identifying threats and mitigations across system boundaries using STRIDE analysis. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill identifies security threats across system components using STRIDE and prioritizes mitigations based on likelihood and impact.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `system_architecture` | string | Yes | Architecture overview and boundaries | Non-empty string |
+| `assets` | array | Yes | Critical assets to protect | At least 1 asset |
+| `trust_boundaries` | array | Yes | System trust boundaries | At least 1 boundary |
+| `data_flows` | array | Yes | Key data flows between components | At least 1 flow |
+| `authentication_model` | string | No | AuthN/AuthZ approach | Optional |
+| `third_party_integrations` | array | No | External services and dependencies | Optional |
 
 ## Output Format
 
 ```json
 {
-  "threat_modeling_stride": {
-    "artifact_type": "threat_model",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+  "stride_threat_model": {
+    "threats": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "stride_category": "Tampering",
+        "component": "webhook-ingest",
+        "scenario": "Unsigned webhook payload replay",
+        "risk": "high",
+        "mitigation": "Require HMAC verification + nonce store"
       }
     ],
-    "risks": [
+    "risk_summary": {
+      "critical": 1,
+      "high": 3,
+      "medium": 5,
+      "low": 4
+    },
+    "mitigation_backlog": [
       {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
+        "id": "TM-03",
+        "owner": "security-engineering",
+        "target_date": "2026-03-10"
       }
-    ]
+    ],
+    "residual_risk": "medium"
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "review_scope": "application and integration layer"
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Architecture Fidelity**: Incomplete architecture context reduces model accuracy.
+- **Threat Breadth**: STRIDE coverage should include all trust boundaries, not just perimeter components.
+- **Risk Calibration**: Severity must reflect both exploitability and business impact.
+- **Mitigation Ownership**: Threat findings without owners should be considered unresolved.
+- **Periodic Refresh**: Threat model should be refreshed after major architecture changes.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: SaaS File Upload Pipeline
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "system_architecture": "Web app uploads files to object storage then async scans and indexes",
+  "assets": [
+    "customer documents",
+    "metadata index",
+    "tenant keys"
+  ],
+  "trust_boundaries": [
+    "browser -> api",
+    "api -> storage",
+    "worker -> database"
+  ],
+  "data_flows": [
+    "upload request",
+    "scan callback",
+    "index write"
+  ],
+  "authentication_model": "OIDC + tenant RBAC",
+  "third_party_integrations": [
+    "malware scanning service"
+  ]
 }
 ```
 
 **Output**:
 ```json
 {
-  "threat_modeling_stride": {
-    "artifact_type": "threat_model",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
-      }
-    ]
+  "stride_threat_model": {
+    "risk_summary": {
+      "critical": 0,
+      "high": 2,
+      "medium": 4,
+      "low": 3
+    },
+    "residual_risk": "low_after_mitigations"
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "review_scope": "upload + processing path"
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: Internal Service Mesh Auth Path
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "system_architecture": "Microservices communicate over mesh with mTLS and JWT service tokens",
+  "assets": [
+    "service credentials",
+    "billing data"
+  ],
+  "trust_boundaries": [
+    "service namespace boundary",
+    "control-plane boundary"
+  ],
+  "data_flows": [
+    "token mint",
+    "service-to-service call",
+    "audit log"
+  ],
+  "authentication_model": "SPIFFE identity + OPA policy",
+  "third_party_integrations": [
+    "central secrets manager"
+  ]
 }
 ```
 
 **Output**:
 ```json
 {
-  "threat_modeling_stride": {
-    "artifact_type": "threat_model",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
+  "stride_threat_model": {
+    "threats": [
       {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
+        "stride_category": "Spoofing",
+        "component": "token-issuer",
+        "scenario": "misconfigured trust domain",
+        "risk": "high"
       }
     ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
-      }
-    ]
+    "residual_risk": "medium"
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "review_scope": "service identity plane"
 }
 ```

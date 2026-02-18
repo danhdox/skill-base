@@ -2,128 +2,85 @@
 
 ## Purpose
 
-This skill provides a structured framework for evaluating interfaces against WCAG requirements and remediation priorities. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill evaluates interfaces against WCAG criteria and prioritizes remediation based on user impact and compliance risk.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `target_surfaces` | array | Yes | Screens/pages/components to audit | At least 1 surface |
+| `platforms` | array | Yes | Platforms included in the audit | At least 1 platform |
+| `wcag_level` | string | Yes | Target WCAG conformance level | Valid values: "A", "AA", "AAA" |
+| `assistive_tech_scope` | array | No | Screen readers/input methods in scope | Optional |
+| `localization_scope` | array | No | Locales covered | Optional |
+| `remediation_window` | string | No | Target timeline for fixes | Optional |
 
 ## Output Format
 
 ```json
 {
   "accessibility_audit_wcag": {
-    "artifact_type": "accessibility_audit",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+    "conformance_summary": {
+      "wcag_level": "AA",
+      "pass_rate": 0.84,
+      "critical_failures": 3
+    },
+    "findings": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "severity": "critical",
+        "criterion": "1.3.1 Info and Relationships",
+        "issue": "Form labels not programmatically associated",
+        "affected_surfaces": [
+          "signup_form"
+        ],
+        "recommended_fix": "Use explicit label-for bindings and aria-describedby"
       }
     ],
-    "risks": [
+    "remediation_plan": [
       {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
+        "priority": "P0",
+        "owner": "frontend-platform",
+        "target_date": "2026-03-01"
       }
-    ]
+    ],
+    "retest_strategy": "Automated + manual assistive tech verification"
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "compliance_risk": "high_until_p0_closed"
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Tooling Limits**: Automated scanners cannot detect all accessibility issues.
+- **Manual Verification**: Keyboard and screen-reader checks are required for confidence.
+- **Locale Differences**: Localization can introduce unique accessibility regressions.
+- **Priority Focus**: Critical user flows should be audited first when scope is large.
+- **Sustained Compliance**: Accessibility requires ongoing regression checks, not one-time audits.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: Signup and Billing Flow Audit
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
-}
-```
-
-**Output**:
-```json
-{
-  "accessibility_audit_wcag": {
-    "artifact_type": "accessibility_audit",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
-      }
-    ]
-  },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
+  "target_surfaces": [
+    "signup",
+    "plan-selection",
+    "billing-details"
   ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
-}
-```
-
-### Example 2: High-Risk Escalation Run
-
-**Input**:
-```json
-{
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "platforms": [
+    "web"
+  ],
+  "wcag_level": "AA",
+  "assistive_tech_scope": [
+    "NVDA",
+    "VoiceOver"
+  ],
+  "localization_scope": [
+    "en-US"
+  ],
+  "remediation_window": "6 weeks"
 }
 ```
 
@@ -131,34 +88,55 @@ This skill provides a structured framework for evaluating interfaces against WCA
 ```json
 {
   "accessibility_audit_wcag": {
-    "artifact_type": "accessibility_audit",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
-      }
-    ],
-    "risks": [
+    "conformance_summary": {
+      "pass_rate": 0.88,
+      "critical_failures": 1
+    },
+    "compliance_phase": "pre-release"
+  },
+  "compliance_risk": "medium"
+}
+```
+
+### Example 2: Mobile Navigation Audit
+
+**Input**:
+```json
+{
+  "target_surfaces": [
+    "home",
+    "settings",
+    "notifications"
+  ],
+  "platforms": [
+    "ios",
+    "android"
+  ],
+  "wcag_level": "AA",
+  "assistive_tech_scope": [
+    "VoiceOver",
+    "TalkBack"
+  ],
+  "localization_scope": [
+    "en-US",
+    "es-ES"
+  ],
+  "remediation_window": "8 weeks"
+}
+```
+
+**Output**:
+```json
+{
+  "accessibility_audit_wcag": {
+    "findings": [
       {
         "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
+        "criterion": "2.4.7 Focus Visible",
+        "issue": "Focus indicator insufficient contrast on dark backgrounds"
       }
     ]
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "compliance_risk": "high"
 }
 ```

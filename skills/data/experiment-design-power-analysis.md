@@ -2,163 +2,121 @@
 
 ## Purpose
 
-This skill provides a structured framework for designing statistically valid experiments with measurable outcomes and sample-size confidence. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill designs controlled experiments and calculates sample size/power so teams can make statistically reliable product and growth decisions.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `hypothesis` | string | Yes | Experiment hypothesis | Non-empty string |
+| `primary_metric` | string | Yes | Primary success metric | Non-empty string |
+| `baseline_value` | number | Yes | Current baseline metric value | Must be >= 0 |
+| `minimum_detectable_effect` | number | Yes | Smallest meaningful lift/drop to detect | Express as decimal (e.g., 0.03 for 3%) |
+| `alpha` | number | No | Type I error rate | Default: 0.05 |
+| `power` | number | No | Desired statistical power | Default: 0.8 |
+| `expected_daily_traffic` | number | No | Eligible daily sample volume | Must be > 0 |
 
 ## Output Format
 
 ```json
 {
-  "experiment_design_power_analysis": {
-    "artifact_type": "experiment_plan",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+  "experiment_design": {
+    "recommended_test_type": "A/B",
+    "sample_size_per_variant": 18450,
+    "estimated_runtime_days": 14,
+    "randomization_unit": "user_id",
+    "guardrail_metrics": [
+      "error_rate",
+      "latency_p95"
+    ],
+    "analysis_plan": "Two-sided z-test with CUPED adjustment"
+  },
+  "power_analysis": {
+    "assumptions": [
+      "independent samples",
+      "stable traffic mix"
+    ],
+    "sensitivity_table": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "mde": 0.02,
+        "sample_size_per_variant": 41000
+      },
+      {
+        "mde": 0.03,
+        "sample_size_per_variant": 18450
       }
     ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
-      }
-    ]
-  },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+    "confidence": "high"
+  }
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Metric Integrity**: Metric definitions must be stable for the full experiment window.
+- **Interference Risk**: Network effects or spillover can invalidate independence assumptions.
+- **Traffic Reality**: Runtime estimates depend on accurate eligible traffic forecasts.
+- **Sequential Peeking**: Repeated significance checks inflate false-positive risk unless corrected.
+- **Operational Guardrails**: Safety metrics must be monitored continuously during the run.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: Checkout Conversion Uplift Test
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "hypothesis": "Reducing checkout steps increases completed purchases",
+  "primary_metric": "checkout_conversion_rate",
+  "baseline_value": 0.214,
+  "minimum_detectable_effect": 0.025,
+  "alpha": 0.05,
+  "power": 0.8,
+  "expected_daily_traffic": 5200
 }
 ```
 
 **Output**:
 ```json
 {
-  "experiment_design_power_analysis": {
-    "artifact_type": "experiment_plan",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
-      }
-    ]
+  "experiment_design": {
+    "recommended_test_type": "A/B",
+    "sample_size_per_variant": 22500,
+    "estimated_runtime_days": 9,
+    "randomization_unit": "session_id"
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "power_analysis": {
+    "confidence": "high"
+  }
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: Email Subject Line CTR Test
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "hypothesis": "Personalized subject lines improve open rate",
+  "primary_metric": "email_open_rate",
+  "baseline_value": 0.34,
+  "minimum_detectable_effect": 0.015,
+  "alpha": 0.05,
+  "power": 0.9,
+  "expected_daily_traffic": 18000
 }
 ```
 
 **Output**:
 ```json
 {
-  "experiment_design_power_analysis": {
-    "artifact_type": "experiment_plan",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
-      }
-    ]
+  "experiment_design": {
+    "recommended_test_type": "A/B/n",
+    "sample_size_per_variant": 30500,
+    "estimated_runtime_days": 6,
+    "randomization_unit": "recipient_id"
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "power_analysis": {
+    "confidence": "medium"
+  }
 }
 ```

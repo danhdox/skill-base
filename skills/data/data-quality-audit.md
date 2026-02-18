@@ -2,78 +2,76 @@
 
 ## Purpose
 
-This skill provides a structured framework for profiling datasets for completeness, consistency, and trustworthiness prior to downstream use. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill audits a dataset for quality dimensions such as completeness, validity, consistency, uniqueness, and timeliness. It helps teams establish data trust before analytics, experimentation, or model training.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `dataset_name` | string | Yes | Dataset to audit | Non-empty string |
+| `data_source` | string | Yes | Source system or pipeline | Non-empty string |
+| `critical_columns` | array | Yes | Columns that cannot fail quality checks | At least 1 column |
+| `primary_key_columns` | array | No | Columns expected to be unique | Optional, but recommended |
+| `freshness_sla_hours` | number | No | Maximum allowed staleness | Range: 1-720, Default: 24 |
+| `sampling_strategy` | string | No | How rows are selected for audit | Valid values: "full", "recent-window", "random-sample", Default: "recent-window" |
 
 ## Output Format
 
 ```json
 {
   "data_quality_audit": {
-    "artifact_type": "quality_audit_report",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+    "overall_score": 81,
+    "dimension_scores": {
+      "completeness": 84,
+      "validity": 79,
+      "consistency": 83,
+      "uniqueness": 92,
+      "timeliness": 68
+    },
+    "critical_failures": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "column": "customer_email",
+        "issue": "invalid format ratio 6.2%",
+        "severity": "high"
       }
     ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
-      }
+    "recommended_remediation": [
+      "Add upstream email normalization",
+      "Backfill missing timestamps for the last 7 days"
     ]
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "audit_confidence": "high",
+  "retest_recommendation": "After pipeline fixes are deployed"
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Sampling Impact**: Partial sampling may miss rare edge-case anomalies.
+- **Business Rule Dependency**: Validity checks must align with documented domain rules.
+- **Schema Drift**: Changing schemas can invalidate historical quality comparisons.
+- **Critical Column Priority**: Critical failures should block downstream usage until mitigated.
+- **Timeliness Context**: Freshness thresholds must match actual business cadence.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: Customer 360 Daily Snapshot
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "dataset_name": "customer_360_daily",
+  "data_source": "warehouse.analytics.customer_360",
+  "critical_columns": [
+    "customer_id",
+    "email",
+    "lifecycle_stage"
+  ],
+  "primary_key_columns": [
+    "customer_id"
+  ],
+  "freshness_sla_hours": 24,
+  "sampling_strategy": "recent-window"
 }
 ```
 
@@ -81,49 +79,34 @@ This skill provides a structured framework for profiling datasets for completene
 ```json
 {
   "data_quality_audit": {
-    "artifact_type": "quality_audit_report",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
-      }
+    "overall_score": 86,
+    "critical_failures": [],
+    "recommended_remediation": [
+      "Tighten lifecycle_stage enum validation"
     ]
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "audit_confidence": "high",
+  "retest_recommendation": "Weekly"
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: Event Stream Ingestion Table
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "dataset_name": "events_raw",
+  "data_source": "kafka -> lakehouse bronze",
+  "critical_columns": [
+    "event_id",
+    "event_timestamp",
+    "event_name"
+  ],
+  "primary_key_columns": [
+    "event_id"
+  ],
+  "freshness_sla_hours": 2,
+  "sampling_strategy": "full"
 }
 ```
 
@@ -131,34 +114,19 @@ This skill provides a structured framework for profiling datasets for completene
 ```json
 {
   "data_quality_audit": {
-    "artifact_type": "quality_audit_report",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
+    "overall_score": 69,
+    "critical_failures": [
       {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
+        "column": "event_timestamp",
+        "issue": "future timestamps 3.1%",
+        "severity": "high"
       }
     ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
-      }
+    "recommended_remediation": [
+      "Reject malformed event_timestamp at ingestion gateway"
     ]
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "audit_confidence": "medium",
+  "retest_recommendation": "After ingestion parser patch"
 }
 ```

@@ -2,163 +2,117 @@
 
 ## Purpose
 
-This skill provides a structured framework for calculating contribution margin drivers and identifying levers for sustainable growth. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill analyzes unit economics to quantify contribution margin, payback dynamics, and growth sustainability by customer segment.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `product_line` | string | Yes | Product or segment under analysis | Non-empty string |
+| `average_revenue_per_unit` | number | Yes | Revenue per account/user/order | Must be >= 0 |
+| `variable_cost_components` | object | Yes | Variable costs tied to each unit | Include key cost categories |
+| `acquisition_cost` | number | Yes | Customer acquisition cost | Must be >= 0 |
+| `retention_profile` | object | No | Retention/churn assumptions | Optional but recommended |
+| `support_and_servicing_cost` | number | No | Support cost allocation per unit | Must be >= 0 |
 
 ## Output Format
 
 ```json
 {
-  "unit_economics_analysis": {
-    "artifact_type": "unit_economics_report",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+  "unit_economics": {
+    "contribution_margin": 0.63,
+    "gross_margin": 0.78,
+    "cac_payback_months": 11.2,
+    "ltv_to_cac": 3.4,
+    "sensitivity": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "driver": "churn +2pp",
+        "ltv_to_cac": 2.7
+      },
+      {
+        "driver": "hosting cost +15%",
+        "contribution_margin": 0.58
       }
     ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
-      }
+    "recommendations": [
+      "Improve onboarding activation to reduce early churn"
     ]
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "decision_support": "viable_with_margin_improvements"
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Allocation Discipline**: Cost allocations must be consistent across segments.
+- **Cohort Sensitivity**: LTV assumptions should reflect cohort-level retention differences.
+- **Growth Stage Effects**: Early-stage CAC volatility can distort conclusions.
+- **Time Horizon**: Short observation windows can understate true payback risk.
+- **Scenario Testing**: Recommendations should account for plausible downside conditions.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: Mid-Market SaaS Segment
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "product_line": "Mid-market SaaS",
+  "average_revenue_per_unit": 420,
+  "variable_cost_components": {
+    "hosting": 58,
+    "payment_fees": 9,
+    "support": 34
+  },
+  "acquisition_cost": 3100,
+  "retention_profile": {
+    "monthly_logo_churn": 0.018
+  },
+  "support_and_servicing_cost": 34
 }
 ```
 
 **Output**:
 ```json
 {
-  "unit_economics_analysis": {
-    "artifact_type": "unit_economics_report",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
-      }
-    ]
+  "unit_economics": {
+    "cac_payback_months": 9.6,
+    "ltv_to_cac": 4.1
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "decision_support": "healthy"
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: Self-Serve SMB Segment
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "product_line": "SMB self-serve",
+  "average_revenue_per_unit": 48,
+  "variable_cost_components": {
+    "hosting": 8,
+    "payment_fees": 2.4,
+    "support": 6.5
+  },
+  "acquisition_cost": 170,
+  "retention_profile": {
+    "monthly_logo_churn": 0.062
+  },
+  "support_and_servicing_cost": 6.5
 }
 ```
 
 **Output**:
 ```json
 {
-  "unit_economics_analysis": {
-    "artifact_type": "unit_economics_report",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
-      }
+  "unit_economics": {
+    "cac_payback_months": 7.4,
+    "ltv_to_cac": 2.2,
+    "recommendations": [
+      "Improve early retention before scaling paid acquisition"
     ]
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "decision_support": "borderline"
 }
 ```

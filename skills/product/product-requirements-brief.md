@@ -2,78 +2,87 @@
 
 ## Purpose
 
-This skill provides a structured framework for translating product intent into a clear, testable requirements brief. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill transforms product intent into a concise, execution-ready requirements brief with clear scope, success criteria, and delivery guardrails.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `problem_statement` | string | Yes | User or business problem to solve | Non-empty string |
+| `target_users` | array | Yes | Primary user personas | At least 1 persona |
+| `goals` | array | Yes | Desired outcomes | At least 1 measurable goal |
+| `non_goals` | array | No | Out-of-scope items | Optional but recommended |
+| `success_metrics` | array | Yes | How success is measured | At least 1 metric |
+| `constraints` | array | No | Technical/legal/timeline constraints | Optional |
 
 ## Output Format
 
 ```json
 {
   "product_requirements_brief": {
-    "artifact_type": "prb_document",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+    "scope_summary": "Clear MVP boundary with must-have and defer list",
+    "requirements": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "id": "REQ-1",
+        "statement": "System must support role-based visibility controls",
+        "priority": "must"
       }
     ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
-      }
-    ]
+    "assumptions": [
+      "Existing auth service can support additional claims"
+    ],
+    "dependencies": [
+      "Design system component update",
+      "Data pipeline availability"
+    ],
+    "acceptance_criteria": [
+      "Metric baseline and target defined for each goal"
+    ],
+    "readiness": "draft"
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "handoff_checklist": [
+    "Engineering signoff",
+    "Design signoff",
+    "Analytics instrumentation plan"
+  ]
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Problem-first**: Requirements should be tied directly to the stated problem.
+- **Scope Control**: Non-goals must be explicit to prevent scope creep.
+- **Measurable Outcomes**: Goals without measurable metrics should be flagged.
+- **Dependency Awareness**: External dependencies must be documented with owners.
+- **Implementation Neutrality**: Requirements should avoid over-prescribing technical solutions.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: Admin Audit Log Feature
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "problem_statement": "Admins cannot trace permission changes reliably",
+  "target_users": [
+    "workspace_admin",
+    "security_analyst"
+  ],
+  "goals": [
+    "Improve compliance readiness",
+    "Reduce support escalations"
+  ],
+  "non_goals": [
+    "No custom report builder in MVP"
+  ],
+  "success_metrics": [
+    "audit_log_adoption",
+    "time_to_investigate"
+  ],
+  "constraints": [
+    "Must reuse existing event store",
+    "SOC2 evidence requirements"
+  ]
 }
 ```
 
@@ -81,49 +90,41 @@ This skill provides a structured framework for translating product intent into a
 ```json
 {
   "product_requirements_brief": {
-    "artifact_type": "prb_document",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
-      }
+    "readiness": "ready_for_estimation",
+    "dependencies": [
+      "Event schema update",
+      "RBAC policy review"
     ]
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "handoff_checklist": [
+    "Security review",
+    "Support training"
+  ]
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: Onboarding Checklist Revamp
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "problem_statement": "New users drop off before first key action",
+  "target_users": [
+    "new_trial_user"
+  ],
+  "goals": [
+    "Increase first-week activation by 15%"
+  ],
+  "non_goals": [
+    "No full IA redesign"
+  ],
+  "success_metrics": [
+    "activation_rate_day7",
+    "time_to_first_value"
+  ],
+  "constraints": [
+    "Launch within 6 weeks"
+  ]
 }
 ```
 
@@ -131,34 +132,13 @@ This skill provides a structured framework for translating product intent into a
 ```json
 {
   "product_requirements_brief": {
-    "artifact_type": "prb_document",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
-      }
+    "readiness": "draft",
+    "assumptions": [
+      "Behavioral nudges can be localized in current frontend stack"
     ]
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "handoff_checklist": [
+    "Analytics event QA"
+  ]
 }
 ```

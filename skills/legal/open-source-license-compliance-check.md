@@ -2,163 +2,131 @@
 
 ## Purpose
 
-This skill provides a structured framework for auditing dependency licenses for obligations, conflicts, and redistribution requirements. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill audits dependency licenses to identify obligations, incompatibilities, and release risks for commercial software distribution.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `dependency_manifest` | array | Yes | Dependencies and detected licenses | At least 1 dependency |
+| `distribution_model` | string | Yes | How the software is distributed | Valid values: "SaaS", "on-prem", "mobile", "embedded", "library" |
+| `commercial_use` | boolean | Yes | Whether software is used commercially | Boolean |
+| `modification_of_dependencies` | boolean | No | Whether OSS dependencies are modified | Default: false |
+| `copyleft_tolerance` | string | No | Organization's accepted copyleft level | Valid values: "none", "weak", "strong", Default: "weak" |
+| `attribution_process` | string | No | Current method for attribution notices | Optional |
 
 ## Output Format
 
 ```json
 {
-  "open_source_license_compliance_check": {
-    "artifact_type": "license_compliance_report",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+  "license_compliance_check": {
+    "overall_status": "review_required",
+    "high_risk_dependencies": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "package": "example-lib",
+        "license": "GPL-3.0",
+        "risk": "Potential copyleft conflict with proprietary distribution",
+        "recommended_action": "Replace dependency or isolate via service boundary"
       }
     ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
-      }
+    "obligations": [
+      "Include NOTICE file",
+      "Provide license texts in distribution"
+    ],
+    "policy_violations": [
+      "Unapproved strong copyleft package detected"
+    ],
+    "remediation_plan": [
+      "Run dependency replacement spike",
+      "Automate license scan in CI"
     ]
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "counsel_escalation": true
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Counsel Confirmation**: Final legal interpretation should be validated by legal counsel.
+- **Metadata Accuracy**: License scan inaccuracies can produce false positives/negatives.
+- **Distribution Context**: Obligations vary by deployment/distribution model.
+- **Transitive Risk**: Transitive dependencies can introduce hidden license obligations.
+- **Change Tracking**: Compliance should be re-run when dependency graph changes.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: SaaS Dependency Audit
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
-}
-```
-
-**Output**:
-```json
-{
-  "open_source_license_compliance_check": {
-    "artifact_type": "license_compliance_report",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
-      }
-    ]
-  },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
+  "dependency_manifest": [
+    {
+      "package": "framework-x",
+      "license": "MIT"
+    },
+    {
+      "package": "image-tool",
+      "license": "LGPL-2.1"
+    }
   ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
-}
-```
-
-### Example 2: High-Risk Escalation Run
-
-**Input**:
-```json
-{
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "distribution_model": "SaaS",
+  "commercial_use": true,
+  "modification_of_dependencies": false,
+  "copyleft_tolerance": "weak",
+  "attribution_process": "Auto-generated acknowledgements page"
 }
 ```
 
 **Output**:
 ```json
 {
-  "open_source_license_compliance_check": {
-    "artifact_type": "license_compliance_report",
+  "license_compliance_check": {
+    "overall_status": "pass_with_obligations",
+    "obligations": [
+      "Retain LGPL notices for image-tool"
+    ],
+    "policy_violations": []
+  },
+  "counsel_escalation": false
+}
+```
+
+### Example 2: On-Prem Enterprise Distribution
+
+**Input**:
+```json
+{
+  "dependency_manifest": [
+    {
+      "package": "core-engine",
+      "license": "Apache-2.0"
+    },
+    {
+      "package": "legacy-parser",
+      "license": "GPL-3.0"
+    }
+  ],
+  "distribution_model": "on-prem",
+  "commercial_use": true,
+  "modification_of_dependencies": true,
+  "copyleft_tolerance": "none",
+  "attribution_process": "manual"
+}
+```
+
+**Output**:
+```json
+{
+  "license_compliance_check": {
     "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
-      }
+    "policy_violations": [
+      "GPL-3.0 package violates policy for on-prem proprietary release"
     ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
-      }
+    "remediation_plan": [
+      "Replace legacy-parser before release cut"
     ]
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "counsel_escalation": true
 }
 ```

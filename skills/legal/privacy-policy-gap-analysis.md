@@ -2,163 +2,146 @@
 
 ## Purpose
 
-This skill provides a structured framework for reviewing privacy policy language for regulatory and operational coverage gaps. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill reviews privacy policy language against product data practices and regulatory expectations to identify disclosure gaps and remediation priorities.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `policy_text` | string | Yes | Current privacy policy content | Non-empty string |
+| `data_processing_activities` | array | Yes | How personal data is collected/used/shared | At least 1 activity |
+| `jurisdictions` | array | Yes | Applicable legal regions | At least 1 jurisdiction |
+| `subprocessor_list` | array | No | Vendors/subprocessors handling personal data | Optional |
+| `retention_practices` | string | No | Current retention and deletion practices | Optional but recommended |
+| `data_subject_request_flow` | string | No | Process for DSAR handling | Optional |
 
 ## Output Format
 
 ```json
 {
-  "privacy_policy_gap_analysis": {
-    "artifact_type": "privacy_gap_report",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+  "privacy_gap_analysis": {
+    "overall_risk": "medium",
+    "coverage_matrix": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "topic": "data collection",
+        "status": "covered"
+      },
+      {
+        "topic": "cross-border transfers",
+        "status": "gap"
+      },
+      {
+        "topic": "retention periods",
+        "status": "partial"
       }
     ],
-    "risks": [
+    "gaps": [
       {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
+        "severity": "high",
+        "topic": "third-party disclosures",
+        "issue": "Policy does not enumerate subprocessor categories",
+        "recommended_update": "Add subprocessor categories and purpose-specific disclosures"
       }
+    ],
+    "priority_order": [
+      "high",
+      "medium",
+      "low"
     ]
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "legal_review_required": true
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Not Legal Advice**: This skill supports legal drafting but does not replace counsel review.
+- **Policy-to-Practice Alignment**: Recommendations depend on accurate operational data flow mapping.
+- **Jurisdiction Sensitivity**: Requirements differ materially by region and must be explicitly scoped.
+- **Change Management**: Policy updates should coordinate with product and support operations.
+- **Version Traceability**: Changes should preserve clear revision history and effective dates.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: SaaS Privacy Policy Annual Review
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "policy_text": "Current policy dated 2025-01-10",
+  "data_processing_activities": [
+    "account creation",
+    "usage analytics",
+    "support logs"
+  ],
+  "jurisdictions": [
+    "US",
+    "EU"
+  ],
+  "subprocessor_list": [
+    "cloud hosting",
+    "email delivery provider"
+  ],
+  "retention_practices": "Account data retained while subscription is active",
+  "data_subject_request_flow": "Support ticket + manual legal review"
 }
 ```
 
 **Output**:
 ```json
 {
-  "privacy_policy_gap_analysis": {
-    "artifact_type": "privacy_gap_report",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
+  "privacy_gap_analysis": {
+    "overall_risk": "medium",
+    "gaps": [
       {
         "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
+        "topic": "retention",
+        "issue": "Retention periods are not specific by data category",
+        "recommended_update": "Add category-based retention schedule"
       }
     ]
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "legal_review_required": true
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: New AI Feature Data Disclosure
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "policy_text": "Policy includes generic analytics language",
+  "data_processing_activities": [
+    "prompt submission",
+    "model output storage",
+    "quality review"
+  ],
+  "jurisdictions": [
+    "US",
+    "UK"
+  ],
+  "subprocessor_list": [
+    "model hosting provider"
+  ],
+  "retention_practices": "30-day transient logs",
+  "data_subject_request_flow": "Self-service privacy portal"
 }
 ```
 
 **Output**:
 ```json
 {
-  "privacy_policy_gap_analysis": {
-    "artifact_type": "privacy_gap_report",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
-      }
-    ],
-    "risks": [
+  "privacy_gap_analysis": {
+    "overall_risk": "high",
+    "gaps": [
       {
         "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
+        "topic": "AI data use",
+        "issue": "Policy does not explain model training/retention choices",
+        "recommended_update": "Add explicit AI processing disclosure and user controls"
       }
     ]
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "legal_review_required": true
 }
 ```

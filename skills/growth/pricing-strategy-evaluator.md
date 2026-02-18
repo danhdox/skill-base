@@ -2,163 +2,152 @@
 
 ## Purpose
 
-This skill provides a structured framework for stress-testing pricing models against customer value, willingness to pay, and revenue goals. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill evaluates pricing and packaging options against willingness-to-pay signals, competitive context, and revenue objectives.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `product_name` | string | Yes | Offering being priced | Non-empty string |
+| `pricing_models` | array | Yes | Candidate pricing models | At least 2 models |
+| `customer_segments` | array | Yes | Segments and buying motions | At least 1 segment |
+| `competitor_benchmarks` | array | No | Comparable competitor plans and price points | Optional |
+| `cost_structure` | object | No | Key cost drivers | Include variable cost assumptions when possible |
+| `revenue_targets` | object | No | ARR/retention targets | Optional |
+| `pricing_constraints` | array | No | Business or legal limits | Optional |
 
 ## Output Format
 
 ```json
 {
-  "pricing_strategy_evaluator": {
-    "artifact_type": "pricing_recommendation",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+  "pricing_evaluation": {
+    "recommended_model": "hybrid_subscription_plus_usage",
+    "rationale": [
+      "Aligns revenue with customer value realization",
+      "Protects gross margin at higher usage tiers"
+    ],
+    "packaging_recommendations": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "tier": "starter",
+        "positioning": "self-serve",
+        "guardrail": "feature limits"
+      },
+      {
+        "tier": "enterprise",
+        "positioning": "security and governance",
+        "guardrail": "annual commitment"
       }
     ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
-      }
+    "sensitivity_analysis": {
+      "price_increase_10pct_retention_delta": -0.02,
+      "discount_ceiling_recommendation": 0.15
+    },
+    "experiments": [
+      "decoy-tier test",
+      "annual prepay discount test"
     ]
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "decision_confidence": "medium"
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Signal Quality**: Recommendations are weaker without recent customer willingness-to-pay data.
+- **Cost Visibility**: Missing unit cost data can hide margin risk.
+- **Segment Differences**: SMB and enterprise pricing logic should not be conflated.
+- **Legal Boundaries**: Regional pricing practices must comply with local requirements.
+- **Experimentation Need**: Significant pricing changes should be validated with controlled tests.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: Transition From Flat Seat Pricing
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "product_name": "Workflow Cloud",
+  "pricing_models": [
+    "flat_per_seat",
+    "usage_based",
+    "hybrid"
+  ],
+  "customer_segments": [
+    "SMB",
+    "mid-market"
+  ],
+  "competitor_benchmarks": [
+    "Competitor A: $39/seat",
+    "Competitor B: usage tiered"
+  ],
+  "cost_structure": {
+    "hosting_per_active_org": 12.5,
+    "support_per_org": 7.2
+  },
+  "revenue_targets": {
+    "net_new_arr": 3000000,
+    "gross_margin_target": 0.78
+  },
+  "pricing_constraints": [
+    "No invoice shock for existing annual contracts"
+  ]
 }
 ```
 
 **Output**:
 ```json
 {
-  "pricing_strategy_evaluator": {
-    "artifact_type": "pricing_recommendation",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
-      }
+  "pricing_evaluation": {
+    "recommended_model": "hybrid",
+    "experiments": [
+      "grandfathered-seat migration cohort"
     ]
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "decision_confidence": "medium"
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: New Enterprise Tier Design
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "product_name": "Workflow Cloud",
+  "pricing_models": [
+    "tiered_subscription",
+    "contracted_usage"
+  ],
+  "customer_segments": [
+    "enterprise"
+  ],
+  "competitor_benchmarks": [
+    "Competitor C enterprise starts at $60k ARR"
+  ],
+  "cost_structure": {
+    "implementation_hours": 120,
+    "support_sla_cost": 9000
+  },
+  "revenue_targets": {
+    "enterprise_arr": 8500000
+  },
+  "pricing_constraints": [
+    "Must include procurement-friendly fixed fee option"
+  ]
 }
 ```
 
 **Output**:
 ```json
 {
-  "pricing_strategy_evaluator": {
-    "artifact_type": "pricing_recommendation",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
+  "pricing_evaluation": {
+    "recommended_model": "tiered_subscription",
+    "packaging_recommendations": [
       {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
+        "tier": "enterprise-plus",
+        "positioning": "compliance and dedicated support"
       }
     ]
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "decision_confidence": "high"
 }
 ```

@@ -2,78 +2,85 @@
 
 ## Purpose
 
-This skill provides a structured framework for validating financial model assumptions, formulas, and consistency before decision-making. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill audits financial models for formula integrity, assumption consistency, and scenario coherence before decisions are made from model outputs.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `model_scope` | string | Yes | What model and decisions are in scope | Non-empty string |
+| `assumptions` | array | Yes | Core model assumptions | At least 3 assumptions |
+| `revenue_logic` | string | Yes | How revenue is modeled | Non-empty string |
+| `cost_logic` | string | Yes | How costs are modeled | Non-empty string |
+| `scenario_definitions` | array | No | Base/upside/downside scenarios | Optional |
+| `known_model_risks` | array | No | Known weak spots or unresolved issues | Optional |
 
 ## Output Format
 
 ```json
 {
   "financial_model_sanity_check": {
-    "artifact_type": "model_sanity_report",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+    "overall_assessment": "requires_revision",
+    "formula_integrity": {
+      "status": "warning",
+      "issues": [
+        "Hard-coded value in gross margin calc"
+      ]
+    },
+    "assumption_consistency": {
+      "status": "warning",
+      "issues": [
+        "Churn assumption differs between revenue sheet and cohort sheet"
+      ]
+    },
+    "scenario_coherence": {
+      "status": "pass",
+      "issues": []
+    },
+    "priority_fixes": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
+        "id": "FM-07",
+        "owner": "finance-ops",
+        "deadline": "2026-02-24",
+        "description": "Remove hard-coded constants"
       }
     ]
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "decision_readiness": "not_ready"
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Model Access**: Review quality depends on access to formulas and assumptions, not outputs only.
+- **Version Control**: Untracked edits can invalidate findings quickly.
+- **Cross-Sheet Drift**: Large models often diverge across linked tabs without strict controls.
+- **Scenario Discipline**: Scenario labels must correspond to actual parameter changes.
+- **Decision Risk**: High-impact decisions should not proceed with unresolved high-severity model issues.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: Annual Budget Model QA
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "model_scope": "FY2027 operating plan",
+  "assumptions": [
+    "Net revenue retention 112%",
+    "Hiring plan 38 net adds",
+    "Cloud COGS +9%"
+  ],
+  "revenue_logic": "ARR cohort expansion + new bookings waterfall",
+  "cost_logic": "Department budget roll-up with headcount driver",
+  "scenario_definitions": [
+    "base",
+    "stretch",
+    "downside"
+  ],
+  "known_model_risks": [
+    "Sales ramp assumptions from old cohort data"
+  ]
 }
 ```
 
@@ -81,49 +88,39 @@ This skill provides a structured framework for validating financial model assump
 ```json
 {
   "financial_model_sanity_check": {
-    "artifact_type": "model_sanity_report",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
+    "overall_assessment": "conditional",
+    "priority_fixes": [
       {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
+        "id": "FM-10",
+        "description": "Refresh sales ramp assumptions from 2026 cohorts"
       }
     ]
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "decision_readiness": "ready_after_fixes"
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: Fundraising Scenario Model Review
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "model_scope": "18-month fundraising runway model",
+  "assumptions": [
+    "Raise closes in month 5",
+    "Gross margin improves to 78%",
+    "Churn steady at 1.9%"
+  ],
+  "revenue_logic": "Top-down pipeline conversion assumptions",
+  "cost_logic": "Function-level spend with staged hiring",
+  "scenario_definitions": [
+    "on-time raise",
+    "delayed raise",
+    "no raise"
+  ],
+  "known_model_risks": [
+    "No sensitivity for delayed enterprise launches"
+  ]
 }
 ```
 
@@ -131,34 +128,13 @@ This skill provides a structured framework for validating financial model assump
 ```json
 {
   "financial_model_sanity_check": {
-    "artifact_type": "model_sanity_report",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
-      }
-    ]
+    "formula_integrity": {
+      "status": "pass"
+    },
+    "assumption_consistency": {
+      "status": "warning"
+    }
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "decision_readiness": "requires_executive_review"
 }
 ```

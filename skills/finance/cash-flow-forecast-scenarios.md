@@ -2,163 +2,147 @@
 
 ## Purpose
 
-This skill provides a structured framework for building scenario-based cash forecasts for planning and risk management. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill produces base, upside, and downside cash-flow scenarios to support runway planning and risk-aware operating decisions.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `opening_cash` | number | Yes | Starting cash balance | Must be >= 0 |
+| `monthly_revenue_projection` | array | Yes | Projected monthly inflows | At least 3 months |
+| `monthly_expense_projection` | array | Yes | Projected monthly outflows | At least 3 months |
+| `financing_events` | array | No | Expected financing or debt events | Optional |
+| `scenario_assumptions` | object | Yes | Assumptions for base/best/worst cases | Must include at least base and downside |
+| `forecast_horizon_months` | number | No | Forecast duration | Range: 3-36, Default: 12 |
 
 ## Output Format
 
 ```json
 {
-  "cash_flow_forecast_scenarios": {
-    "artifact_type": "cash_flow_forecast",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
-      }
+  "cash_flow_forecast": {
+    "base_case": {
+      "runway_months": 14,
+      "min_cash_balance": 1200000
+    },
+    "upside_case": {
+      "runway_months": 19,
+      "min_cash_balance": 2150000
+    },
+    "downside_case": {
+      "runway_months": 9,
+      "min_cash_balance": 280000
+    },
+    "key_drivers": [
+      "new ARR conversion",
+      "hiring pace",
+      "infrastructure spend"
     ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
-      }
+    "recommended_controls": [
+      "Trigger hiring freeze if downside runway < 8 months"
     ]
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "board_packet_ready": true
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Projection Uncertainty**: Forecasts are sensitive to pipeline and expense assumptions.
+- **Event Timing**: Financing delays can materially shift runway outcomes.
+- **Granularity Limits**: Monthly models may hide intra-month liquidity crunches.
+- **Scenario Discipline**: Downside scenarios should be plausible, not extreme fantasies.
+- **Decision Triggers**: Forecasts are most useful when tied to explicit control actions.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: Annual Operating Plan Forecast
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "opening_cash": 6400000,
+  "monthly_revenue_projection": [
+    620000,
+    650000,
+    690000,
+    730000
+  ],
+  "monthly_expense_projection": [
+    980000,
+    1020000,
+    1050000,
+    1080000
+  ],
+  "financing_events": [
+    {
+      "month": 8,
+      "amount": 4000000,
+      "type": "equity"
+    }
+  ],
+  "scenario_assumptions": {
+    "base": "pipeline conversion at historical average",
+    "upside": "enterprise deal closes one quarter early",
+    "downside": "hiring costs exceed plan by 12%"
+  },
+  "forecast_horizon_months": 12
 }
 ```
 
 **Output**:
 ```json
 {
-  "cash_flow_forecast_scenarios": {
-    "artifact_type": "cash_flow_forecast",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
-      }
-    ]
+  "cash_flow_forecast": {
+    "base_case": {
+      "runway_months": 13
+    },
+    "downside_case": {
+      "runway_months": 8
+    }
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "board_packet_ready": true
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: Cost Containment Scenario
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "opening_cash": 2200000,
+  "monthly_revenue_projection": [
+    210000,
+    225000,
+    240000,
+    255000
+  ],
+  "monthly_expense_projection": [
+    390000,
+    395000,
+    405000,
+    420000
+  ],
+  "financing_events": [],
+  "scenario_assumptions": {
+    "base": "planned spend profile",
+    "upside": "vendor renegotiation reduces COGS",
+    "downside": "renewal churn increases by 5%"
+  },
+  "forecast_horizon_months": 9
 }
 ```
 
 **Output**:
 ```json
 {
-  "cash_flow_forecast_scenarios": {
-    "artifact_type": "cash_flow_forecast",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
-      }
+  "cash_flow_forecast": {
+    "recommended_controls": [
+      "Reduce discretionary spend by 10% in month 2"
     ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
-      }
-    ]
+    "downside_case": {
+      "runway_months": 5
+    }
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "board_packet_ready": false
 }
 ```

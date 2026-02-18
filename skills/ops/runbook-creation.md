@@ -2,163 +2,148 @@
 
 ## Purpose
 
-This skill provides a structured framework for converting operational knowledge into executable runbooks for repeatable incident handling. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill converts operational response knowledge into clear runbooks with prerequisites, diagnostics, remediation steps, and escalation criteria.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `service_name` | string | Yes | Service/system covered by the runbook | Non-empty string |
+| `trigger_conditions` | array | Yes | Conditions that should trigger runbook use | At least 1 trigger |
+| `prerequisites` | array | Yes | Access/tools required | At least 1 prerequisite |
+| `diagnostic_signals` | array | Yes | Logs/metrics/traces to inspect | At least 1 signal |
+| `remediation_options` | array | Yes | Potential mitigation actions | At least 1 option |
+| `escalation_policy` | string | No | When and to whom to escalate | Optional |
 
 ## Output Format
 
 ```json
 {
-  "runbook_creation": {
-    "artifact_type": "runbook",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+  "runbook": {
+    "title": "Service Incident Response Runbook",
+    "entry_criteria": [
+      "Alert threshold crossed",
+      "Customer report confirms impact"
+    ],
+    "diagnostic_steps": [
+      "Check dashboard X",
+      "Validate dependency Y",
+      "Review deploy history"
+    ],
+    "remediation_playbooks": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "scenario": "dependency_timeout",
+        "steps": [
+          "Fail over",
+          "reduce traffic",
+          "notify stakeholders"
+        ]
       }
     ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
-      }
+    "rollback_criteria": [
+      "Error rate remains >2% after mitigation"
+    ],
+    "escalation_triggers": [
+      "No improvement after 20 minutes"
     ]
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "maintenance_plan": "Review quarterly and after incidents"
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Operator Clarity**: Runbooks must be executable by on-call responders under stress.
+- **Step Verifiability**: Each action should include observable success/failure indicators.
+- **Environment Accuracy**: Commands/procedures must match current infrastructure.
+- **Escalation Safety**: High-risk actions should include approval/escalation checkpoints.
+- **Revision Cadence**: Runbooks should be updated after incidents and architecture changes.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: API Gateway Latency Runbook
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "service_name": "api-gateway",
+  "trigger_conditions": [
+    "p95 latency > 600ms for 10 min",
+    "error rate > 2%"
+  ],
+  "prerequisites": [
+    "prod dashboard access",
+    "kubectl access",
+    "pager role"
+  ],
+  "diagnostic_signals": [
+    "gateway latency dashboard",
+    "upstream timeout logs"
+  ],
+  "remediation_options": [
+    "rollback latest release",
+    "shift traffic to healthy region"
+  ],
+  "escalation_policy": "Escalate to platform lead if unresolved after 20 minutes"
 }
 ```
 
 **Output**:
 ```json
 {
-  "runbook_creation": {
-    "artifact_type": "runbook",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
+  "runbook": {
+    "entry_criteria": [
+      "SEV-2 latency threshold crossed"
     ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
-      }
+    "escalation_triggers": [
+      "Mitigation fails twice"
     ]
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "maintenance_plan": "Drill monthly"
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: Batch Processing Failure Runbook
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "service_name": "billing-batch-worker",
+  "trigger_conditions": [
+    "Job failure count > 3",
+    "queue lag > 30 min"
+  ],
+  "prerequisites": [
+    "job scheduler access",
+    "warehouse query permissions"
+  ],
+  "diagnostic_signals": [
+    "job logs",
+    "queue backlog metrics"
+  ],
+  "remediation_options": [
+    "retry failed partition",
+    "backfill from checkpoint"
+  ],
+  "escalation_policy": "Escalate to finance ops if invoice SLA risk exceeds 4 hours"
 }
 ```
 
 **Output**:
 ```json
 {
-  "runbook_creation": {
-    "artifact_type": "runbook",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
+  "runbook": {
+    "remediation_playbooks": [
       {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
+        "scenario": "partition_corruption",
+        "steps": [
+          "stop consumer",
+          "rebuild partition",
+          "resume with monitor"
+        ]
       }
     ]
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "maintenance_plan": "Update after each month-end incident"
 }
 ```

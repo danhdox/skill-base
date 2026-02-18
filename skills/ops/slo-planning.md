@@ -2,163 +2,146 @@
 
 ## Purpose
 
-This skill provides a structured framework for defining service level objectives, indicators, and error budgets aligned to business impact. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill defines practical SLOs and error budgets tied to user journeys and operational response capacity.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `service_name` | string | Yes | Service or product surface | Non-empty string |
+| `critical_user_journeys` | array | Yes | Journeys to protect | At least 1 journey |
+| `historical_performance` | object | Yes | Recent latency/availability data | Include at least one month of data when possible |
+| `business_tolerance` | string | Yes | Acceptable failure impact | Non-empty string |
+| `oncall_capacity` | string | No | Responder capacity and coverage | Optional |
+| `release_cadence` | string | No | Deployment frequency | Optional |
 
 ## Output Format
 
 ```json
 {
-  "slo_planning": {
-    "artifact_type": "slo_plan",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+  "slo_plan": {
+    "slis": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "name": "request_success_rate",
+        "definition": "2xx/3xx responses over total valid requests"
+      },
+      {
+        "name": "p95_latency",
+        "definition": "95th percentile request latency"
       }
     ],
-    "risks": [
+    "slos": [
       {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
+        "name": "availability",
+        "target": "99.9% per 30 days"
+      },
+      {
+        "name": "latency",
+        "target": "p95 < 300ms"
       }
-    ]
+    ],
+    "error_budget_policy": {
+      "burn_alerts": [
+        "2% in 1h",
+        "10% in 6h"
+      ],
+      "actions": [
+        "Freeze risky deploys",
+        "Escalate to incident review"
+      ]
+    },
+    "review_cadence": "monthly"
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "adoption_readiness": "ready"
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Journey Alignment**: SLOs should map to user-critical journeys, not only system internals.
+- **Data Quality**: SLI definitions require reliable telemetry and denominator rules.
+- **Operability**: Alert thresholds should be actionable for on-call responders.
+- **Budget Policy**: Error budget policies must define concrete operational actions.
+- **Recalibration**: SLO targets should be reviewed when product usage or reliability profile shifts.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: API Platform SLO Set
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "service_name": "public-api",
+  "critical_user_journeys": [
+    "create resource",
+    "list resources",
+    "webhook delivery"
+  ],
+  "historical_performance": {
+    "availability_30d": 99.82,
+    "p95_latency_ms": 340
+  },
+  "business_tolerance": "Partial degradation acceptable, sustained failures are not",
+  "oncall_capacity": "24/7 SRE primary + product engineer secondary",
+  "release_cadence": "daily"
 }
 ```
 
 **Output**:
 ```json
 {
-  "slo_planning": {
-    "artifact_type": "slo_plan",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
+  "slo_plan": {
+    "slos": [
       {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
+        "name": "availability",
+        "target": "99.9%"
+      },
       {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
+        "name": "latency",
+        "target": "p95 < 300ms"
       }
     ]
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "adoption_readiness": "ready_after_dashboard_cleanup"
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: Internal Reporting Service
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "service_name": "reporting-jobs",
+  "critical_user_journeys": [
+    "daily report generation",
+    "monthly finance export"
+  ],
+  "historical_performance": {
+    "success_rate": 98.7,
+    "median_runtime_minutes": 14
+  },
+  "business_tolerance": "Daily reports can be delayed up to 30 minutes",
+  "oncall_capacity": "business-hours only",
+  "release_cadence": "weekly"
 }
 ```
 
 **Output**:
 ```json
 {
-  "slo_planning": {
-    "artifact_type": "slo_plan",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
+  "slo_plan": {
+    "slos": [
       {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
+        "name": "job_success_rate",
+        "target": "99.2%"
       }
     ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
-      }
-    ]
+    "error_budget_policy": {
+      "actions": [
+        "Defer non-critical releases after high burn"
+      ]
+    }
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "adoption_readiness": "needs_alerting_coverage"
 }
 ```

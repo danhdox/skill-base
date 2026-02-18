@@ -2,163 +2,131 @@
 
 ## Purpose
 
-This skill provides a structured framework for rapidly classifying incidents, assigning ownership, and triggering coordinated response. It encodes practical decision criteria, standard review checkpoints, and output conventions so teams can execute consistently across different AI agents and operators. The goal is to produce an actionable artifact that can be reused in downstream planning and execution.
+This skill classifies incoming incidents quickly, aligns severity to impact, and produces a coordinated response packet for on-call teams.
 
 ## Inputs
 
 | Name | Type | Required | Description | Constraints |
 |------|------|----------|-------------|-------------|
-| `objective` | string | Yes | What decision or outcome this run should support | Non-empty string, max 250 chars |
-| `scope` | string | Yes | System, project, or workflow boundaries for analysis | Non-empty string |
-| `context` | string | No | Additional business or technical context | Max 2000 chars |
-| `constraints` | array | No | Hard constraints that recommendations must respect | Each item non-empty string |
-| `analysis_depth` | string | No | Depth of analysis to perform | Valid values: "quick", "standard", "comprehensive", Default: "standard" |
-| `time_horizon` | string | No | Relevant time horizon for recommendations | Valid values: "immediate", "quarter", "year", Default: "quarter" |
+| `incident_signal` | string | Yes | Initial alert or report | Non-empty string |
+| `impacted_services` | array | Yes | Services/systems impacted | At least 1 service |
+| `customer_impact` | string | Yes | Observed user impact | Describe scope and severity |
+| `error_budget_state` | string | No | Current SLO/error budget context | Optional |
+| `known_dependencies` | array | No | Upstream/downstream dependencies | Optional |
+| `oncall_roster` | array | No | Available responders by function | Optional |
 
 ## Output Format
 
 ```json
 {
-  "incident_response_triage": {
-    "artifact_type": "triage_packet",
-    "overall_status": "needs_revision",
-    "executive_summary": "Concise summary of current state and recommended direction.",
-    "confidence": "medium",
-    "priority_actions": [
+  "incident_triage": {
+    "severity": "SEV-2",
+    "classification_rationale": [
+      "User-facing impact confirmed",
+      "Partial service outage in one region"
+    ],
+    "initial_actions": [
+      "Assign incident commander",
+      "Start mitigation timeline",
+      "Post customer status update"
+    ],
+    "responder_assignments": [
       {
-        "id": "A1",
-        "title": "Highest-impact action",
-        "owner": "team-or-role",
-        "timeline": "2 weeks",
-        "expected_outcome": "Measurable improvement tied to objective"
+        "role": "incident_commander",
+        "owner": "oncall-sre"
+      },
+      {
+        "role": "communications",
+        "owner": "support-lead"
       }
     ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Primary execution risk",
-        "mitigation": "Concrete mitigation step"
-      }
+    "next_checkpoints": [
+      "15-minute technical update",
+      "30-minute customer update"
     ]
   },
-  "assumptions": [
-    "Assumption 1",
-    "Assumption 2"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "List missing context that may affect confidence"
-  },
-  "next_review_trigger": "Condition or date that should trigger a re-run"
+  "triage_status": "active"
 }
 ```
 
 ## Constraints
 
-- **Scope Discipline**: This skill should only evaluate the scope explicitly provided; out-of-scope systems must be flagged, not inferred.
-- **Input Dependency**: Output quality depends on the completeness and recency of supplied context. Missing constraints must be called out explicitly.
-- **Decision Support**: This skill produces structured recommendations, not final approvals or legal/security sign-off by itself.
-- **No Hidden Assumptions**: Any assumption that materially affects recommendations must be listed in the output.
-- **Agent Portability**: Recommendations should remain implementation-agnostic enough to be reused across Codex, Claude, and similar agent workflows.
+- **Signal Uncertainty**: Initial severity can change as more evidence arrives.
+- **Consistency**: Severity decisions should follow a documented rubric.
+- **Comms Discipline**: External updates must align with verified facts.
+- **Ownership Clarity**: Incident command and communications ownership must be explicit.
+- **Escalation Path**: Escalate when blast radius exceeds current responder authority.
 
 ## Invocation
 
-### Example 1: Standard Planning Run
+### Example 1: Elevated API Error Rate
 
 **Input**:
 ```json
 {
-  "objective": "Prepare a reliable first-pass plan for upcoming execution",
-  "scope": "Core application workflow and supporting operations",
-  "context": "Current process has inconsistent outputs between teams",
-  "constraints": ["No downtime", "No new paid tooling"],
-  "analysis_depth": "standard",
-  "time_horizon": "quarter"
+  "incident_signal": "Alert: 5xx rate above 7% for api-gateway",
+  "impacted_services": [
+    "api-gateway",
+    "payments-api"
+  ],
+  "customer_impact": "Checkout intermittently failing for US users",
+  "error_budget_state": "80% budget burned this week",
+  "known_dependencies": [
+    "database-primary",
+    "feature-flag-service"
+  ],
+  "oncall_roster": [
+    "sre-oncall",
+    "payments-oncall",
+    "support-manager"
+  ]
 }
 ```
 
 **Output**:
 ```json
 {
-  "incident_response_triage": {
-    "artifact_type": "triage_packet",
-    "overall_status": "actionable",
-    "executive_summary": "The current state can support delivery after three blocking actions are completed.",
-    "confidence": "medium",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Standardize operating checklist",
-        "owner": "project-lead",
-        "timeline": "1 week",
-        "expected_outcome": "Reduced execution variance"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "medium",
-        "description": "Missing baseline metrics",
-        "mitigation": "Collect two-week baseline before optimization"
-      }
+  "incident_triage": {
+    "severity": "SEV-1",
+    "initial_actions": [
+      "Trigger SEV-1 bridge",
+      "Rollback latest deploy"
     ]
   },
-  "assumptions": [
-    "Team capacity remains stable for this quarter"
-  ],
-  "input_quality": {
-    "completeness": "good",
-    "notes": "Sufficient context for a standard-depth run"
-  },
-  "next_review_trigger": "After first implementation milestone"
+  "triage_status": "active"
 }
 ```
 
-### Example 2: High-Risk Escalation Run
+### Example 2: Background Job Delay
 
 **Input**:
 ```json
 {
-  "objective": "Identify critical blockers before high-visibility launch",
-  "scope": "Customer-facing release workflow",
-  "context": "Launch date is fixed and rollback windows are limited",
-  "constraints": ["No schedule slip", "Must keep audit trail"],
-  "analysis_depth": "comprehensive",
-  "time_horizon": "immediate"
+  "incident_signal": "Queue lag warning on nightly reporting jobs",
+  "impacted_services": [
+    "reporting-worker"
+  ],
+  "customer_impact": "Reports delayed by up to 45 minutes; no data loss",
+  "error_budget_state": "within budget",
+  "known_dependencies": [
+    "warehouse read replica"
+  ],
+  "oncall_roster": [
+    "data-platform-oncall"
+  ]
 }
 ```
 
 **Output**:
 ```json
 {
-  "incident_response_triage": {
-    "artifact_type": "triage_packet",
-    "overall_status": "blocked",
-    "executive_summary": "Launch should pause until high-severity control gaps are closed.",
-    "confidence": "high",
-    "priority_actions": [
-      {
-        "id": "A1",
-        "title": "Close critical control gap",
-        "owner": "incident-commander",
-        "timeline": "48 hours",
-        "expected_outcome": "Risk reduced to acceptable launch threshold"
-      }
-    ],
-    "risks": [
-      {
-        "severity": "high",
-        "description": "Single-point failure in release approvals",
-        "mitigation": "Add dual-approval fallback and test during drill"
-      }
+  "incident_triage": {
+    "severity": "SEV-3",
+    "classification_rationale": [
+      "Degraded internal function",
+      "No immediate customer outage"
     ]
   },
-  "assumptions": [
-    "Operational team is available for rapid remediation"
-  ],
-  "input_quality": {
-    "completeness": "partial",
-    "notes": "Some upstream dependency owners not yet identified"
-  },
-  "next_review_trigger": "Immediately after critical fixes are verified"
+  "triage_status": "monitoring"
 }
 ```
