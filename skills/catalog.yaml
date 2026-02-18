@@ -1,0 +1,424 @@
+{
+  "skills": [
+    {
+      "id": "data/data-quality-audit",
+      "domain": "data",
+      "skill_type": "audit",
+      "title": "Data Quality Audit",
+      "path": "skills/data/data-quality-audit.md",
+      "summary": "Audits data assets for completeness, validity, and operational trustworthiness.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "data/experiment-design-power-analysis",
+      "domain": "data",
+      "skill_type": "planning",
+      "title": "Experiment Design and Power Analysis",
+      "path": "skills/data/experiment-design-power-analysis.md",
+      "summary": "Designs experiments with measurable outcomes and statistically valid sample sizing.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "data/exploratory-analysis",
+      "domain": "data",
+      "skill_type": "analysis",
+      "title": "Exploratory Data Analysis",
+      "path": "skills/data/exploratory-analysis.md",
+      "summary": "Profiles datasets to surface distributions, quality issues, and early hypotheses.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "design/accessibility-audit-wcag",
+      "domain": "design",
+      "skill_type": "audit",
+      "title": "Accessibility Audit (WCAG)",
+      "path": "skills/design/accessibility-audit-wcag.md",
+      "summary": "Reviews interfaces against WCAG criteria with prioritized remediation steps.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "design/design-system-audit",
+      "domain": "design",
+      "skill_type": "audit",
+      "title": "Design System Audit",
+      "path": "skills/design/design-system-audit.md",
+      "summary": "Audits design system consistency, coverage, and adoption quality.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "design/ux-heuristic-evaluation",
+      "domain": "design",
+      "skill_type": "evaluation",
+      "title": "UX Heuristic Evaluation",
+      "path": "skills/design/ux-heuristic-evaluation.md",
+      "summary": "Evaluates product UX against established usability heuristics.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "engineering/api-design-review",
+      "domain": "engineering",
+      "skill_type": "review",
+      "title": "API Design Review",
+      "path": "skills/engineering/api-design-review.md",
+      "summary": "Evaluates API design for consistency, usability, and long-term maintainability.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "engineering/code-review-checklist",
+      "domain": "engineering",
+      "skill_type": "checklist",
+      "title": "Code Review Checklist",
+      "path": "skills/engineering/code-review-checklist.md",
+      "summary": "Structured checklist for reviewing code quality, correctness, and delivery risk.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "engineering/incident-postmortem-analysis",
+      "domain": "engineering",
+      "skill_type": "analysis",
+      "title": "Incident Postmortem Analysis",
+      "path": "skills/engineering/incident-postmortem-analysis.md",
+      "summary": "Turns incident timelines into root causes, lessons, and prevention actions.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "finance/cash-flow-forecast-scenarios",
+      "domain": "finance",
+      "skill_type": "forecasting",
+      "title": "Cash Flow Forecast Scenarios",
+      "path": "skills/finance/cash-flow-forecast-scenarios.md",
+      "summary": "Builds scenario-based cash flow forecasts for planning and risk control.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "finance/financial-model-sanity-check",
+      "domain": "finance",
+      "skill_type": "validation",
+      "title": "Financial Model Sanity Check",
+      "path": "skills/finance/financial-model-sanity-check.md",
+      "summary": "Validates financial model assumptions, formulas, and internal consistency.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "finance/unit-economics-analysis",
+      "domain": "finance",
+      "skill_type": "analysis",
+      "title": "Unit Economics Analysis",
+      "path": "skills/finance/unit-economics-analysis.md",
+      "summary": "Calculates unit economics to identify margin drivers and growth constraints.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "growth/go-to-market-plan",
+      "domain": "growth",
+      "skill_type": "planning",
+      "title": "Go-to-Market Plan",
+      "path": "skills/growth/go-to-market-plan.md",
+      "summary": "Builds launch strategy, channel sequencing, and execution milestones.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "growth/market-sizing",
+      "domain": "growth",
+      "skill_type": "analysis",
+      "title": "Market Sizing",
+      "path": "skills/growth/market-sizing.md",
+      "summary": "Estimates TAM, SAM, and SOM with explicit assumptions and confidence ranges.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "growth/pricing-strategy-evaluator",
+      "domain": "growth",
+      "skill_type": "evaluation",
+      "title": "Pricing Strategy Evaluator",
+      "path": "skills/growth/pricing-strategy-evaluator.md",
+      "summary": "Assesses pricing approaches against value capture and growth objectives.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "legal/contract-risk-assessment",
+      "domain": "legal",
+      "skill_type": "assessment",
+      "title": "Contract Risk Assessment",
+      "path": "skills/legal/contract-risk-assessment.md",
+      "summary": "Identifies legal risk in contracts and recommends negotiation priorities.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "legal/open-source-license-compliance-check",
+      "domain": "legal",
+      "skill_type": "compliance",
+      "title": "Open Source License Compliance Check",
+      "path": "skills/legal/open-source-license-compliance-check.md",
+      "summary": "Checks OSS dependency licenses for obligations, conflicts, and remediation.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "legal/privacy-policy-gap-analysis",
+      "domain": "legal",
+      "skill_type": "analysis",
+      "title": "Privacy Policy Gap Analysis",
+      "path": "skills/legal/privacy-policy-gap-analysis.md",
+      "summary": "Finds policy coverage gaps versus privacy obligations and operations.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "onchain/protocol-governance-design-review",
+      "domain": "onchain",
+      "skill_type": "review",
+      "title": "Protocol Governance Design Review",
+      "path": "skills/onchain/protocol-governance-design-review.md",
+      "summary": "Evaluates protocol governance mechanics for resilience and capture resistance.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "onchain/smart-contract-audit",
+      "domain": "onchain",
+      "skill_type": "audit",
+      "title": "Smart Contract Security Audit",
+      "path": "skills/onchain/smart-contract-audit.md",
+      "summary": "Reviews smart contract logic for vulnerabilities and deployment risk.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "onchain/tokenomics-risk-review",
+      "domain": "onchain",
+      "skill_type": "review",
+      "title": "Tokenomics Risk Review",
+      "path": "skills/onchain/tokenomics-risk-review.md",
+      "summary": "Analyzes token incentive design, supply dynamics, and governance risks.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "ops/incident-response-triage",
+      "domain": "ops",
+      "skill_type": "triage",
+      "title": "Incident Response Triage",
+      "path": "skills/ops/incident-response-triage.md",
+      "summary": "Classifies incidents quickly and triggers coordinated response workflows.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "ops/runbook-creation",
+      "domain": "ops",
+      "skill_type": "documentation",
+      "title": "Runbook Creation",
+      "path": "skills/ops/runbook-creation.md",
+      "summary": "Transforms operational procedures into executable runbooks.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "ops/slo-planning",
+      "domain": "ops",
+      "skill_type": "planning",
+      "title": "SLO Planning",
+      "path": "skills/ops/slo-planning.md",
+      "summary": "Defines SLOs, SLIs, and error budgets aligned to user impact.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "product/feature-prioritization-rice",
+      "domain": "product",
+      "skill_type": "prioritization",
+      "title": "Feature Prioritization (RICE)",
+      "path": "skills/product/feature-prioritization-rice.md",
+      "summary": "Ranks feature candidates using RICE with transparent scoring assumptions.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "product/product-requirements-brief",
+      "domain": "product",
+      "skill_type": "planning",
+      "title": "Product Requirements Brief",
+      "path": "skills/product/product-requirements-brief.md",
+      "summary": "Converts product intent into a clear, testable requirements brief.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "product/user-story-mapping",
+      "domain": "product",
+      "skill_type": "planning",
+      "title": "User Story Mapping",
+      "path": "skills/product/user-story-mapping.md",
+      "summary": "Maps user journeys into release slices and implementation-ready stories.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "security/authentication-flow-review",
+      "domain": "security",
+      "skill_type": "review",
+      "title": "Authentication Flow Review",
+      "path": "skills/security/authentication-flow-review.md",
+      "summary": "Assesses auth and session flows for security, UX, and reliability gaps.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "security/third-party-vendor-security-review",
+      "domain": "security",
+      "skill_type": "assessment",
+      "title": "Third-Party Vendor Security Review",
+      "path": "skills/security/third-party-vendor-security-review.md",
+      "summary": "Evaluates third-party vendors for security posture and integration risk.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    },
+    {
+      "id": "security/threat-modeling-stride",
+      "domain": "security",
+      "skill_type": "modeling",
+      "title": "Threat Modeling (STRIDE)",
+      "path": "skills/security/threat-modeling-stride.md",
+      "summary": "Identifies and prioritizes system threats using STRIDE methodology.",
+      "status": "stable",
+      "agent_compatibility": [
+        "codex",
+        "claude",
+        "generic-llm"
+      ]
+    }
+  ]
+}

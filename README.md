@@ -1,101 +1,128 @@
 # skill-base
 
-A curated registry of high-leverage, agent-callable skills. Structured playbooks that encode judgment, not just prompts. Designed for LLM workflows, slash-command invocation, and composable expertise across growth, engineering, data, legal, and onchain domains.
+Open-source skills for AI agents.
 
-## What is a Skill?
+`skill-base` is a reusable library of structured skills that work across Codex, Claude, and other agent runtimes. Skills are grouped by domain, written in a consistent format, and designed so teams can copy them directly into their own projects.
 
-A **skill** is a structured, reusable package of expertise that agents (human or AI) can invoke to perform specific tasks. Unlike simple prompts or scripts, skills encode:
+## Why This Repository
 
-- **Judgment**: Domain-specific decision-making criteria and best practices
-- **Structured Outputs**: Consistent, parseable formats that can be composed into workflows
-- **Context Awareness**: Clear boundaries on when to use (and when not to use) the skill
+- Build reliable agent workflows with reusable, reviewable skill files.
+- Keep skill outputs predictable with a shared contract.
+- Help teams quickly skim, copy, and compose domain-specific skills.
 
-### Key Characteristics
+## Quick Start
 
-1. **Encoded Judgment**: Skills capture expert decision-making patterns, not just procedural steps
-2. **Structured Outputs**: Results follow defined schemas for downstream consumption
-3. **Composable**: Skills can be chained together to build complex workflows
-4. **Self-Documenting**: Each skill includes its purpose, inputs, constraints, and usage examples
+### Option 1: Copy one skill
 
-### Invocation Examples
-
-Skills in this repository are designed to be invoked in multiple ways:
-
-**Direct Agent Call**:
-```
-@agent invoke skill:growth/market-sizing --target-market "B2B SaaS" --geography "North America"
+```bash
+cp skills/engineering/code-review-checklist.md /path/to/your-project/skills/
 ```
 
-**CLI/Slash Command**:
-```
-/skill growth/market-sizing --target-market="B2B SaaS"
+### Option 2: Copy a full domain
+
+```bash
+cp -R skills/security /path/to/your-project/skills/
 ```
 
-**Programmatic**:
-```python
-from skill_base import invoke_skill
+### Option 3: Clone and curate
 
-result = invoke_skill(
-    "growth/market-sizing",
-    params={"target_market": "B2B SaaS", "geography": "North America"}
-)
+```bash
+git clone https://github.com/danhdox/skill-base.git
 ```
 
-**Natural Language**:
-```
-"Run the market sizing skill for the B2B SaaS market in North America"
-```
+## Use With Any Agent
 
-## Repository Structure
+You can invoke these skills with:
 
-```
+- Codex-style workflows
+- Claude-style workflows
+- Internal agent frameworks and prompt runners
+- Manual human-in-the-loop review flows
+
+## Repository Layout
+
+```text
 skill-base/
-├── skills/           # Core skill library organized by domain
-│   ├── growth/       # Growth and GTM skills
-│   ├── engineering/  # Software development and architecture
-│   ├── data/         # Data analysis and modeling
-│   ├── legal/        # Legal review and compliance
-│   └── onchain/      # Blockchain and web3 operations
-├── external/         # Links to external skill registries
-└── SKILL_SPEC.md     # Specification for creating new skills
+├── skills/
+│   ├── catalog.yaml
+│   ├── engineering/
+│   ├── data/
+│   ├── growth/
+│   ├── legal/
+│   ├── onchain/
+│   ├── product/
+│   ├── security/
+│   ├── ops/
+│   ├── finance/
+│   └── design/
+├── scripts/
+│   ├── validate_skills.py
+│   └── sync_readme_catalog.py
+├── SKILL_SPEC.md
+└── .github/workflows/validate.yml
 ```
 
-## Getting Started
+## Skill Contract
 
-### Using Skills
+All skills follow the required specification in [`SKILL_SPEC.md`](SKILL_SPEC.md).
 
-1. Browse the `skills/` directory to find relevant skills for your domain
-2. Read the skill's documentation to understand its purpose and inputs
-3. Invoke the skill using your preferred method (agent, CLI, or programmatic)
-4. Process the structured output in your workflow
+## Full Skill Catalog
 
-### Contributing Skills
+The table below is generated from [`skills/catalog.yaml`](skills/catalog.yaml).
 
-1. Review the [SKILL_SPEC.md](SKILL_SPEC.md) specification
-2. Create your skill following the required format
-3. Place it in the appropriate domain folder under `skills/`
-4. Include comprehensive examples and edge case handling
-5. Submit a pull request with your skill and tests
+<!-- SKILL_CATALOG_START -->
 
-## Example Skills
+| Domain | Skill Type | Skill | Summary | Path |
+|---|---|---|---|---|
+| data | audit | [Data Quality Audit](skills/data/data-quality-audit.md) | Audits data assets for completeness, validity, and operational trustworthiness. | `skills/data/data-quality-audit.md` |
+| data | planning | [Experiment Design and Power Analysis](skills/data/experiment-design-power-analysis.md) | Designs experiments with measurable outcomes and statistically valid sample sizing. | `skills/data/experiment-design-power-analysis.md` |
+| data | analysis | [Exploratory Data Analysis](skills/data/exploratory-analysis.md) | Profiles datasets to surface distributions, quality issues, and early hypotheses. | `skills/data/exploratory-analysis.md` |
+| design | audit | [Accessibility Audit (WCAG)](skills/design/accessibility-audit-wcag.md) | Reviews interfaces against WCAG criteria with prioritized remediation steps. | `skills/design/accessibility-audit-wcag.md` |
+| design | audit | [Design System Audit](skills/design/design-system-audit.md) | Audits design system consistency, coverage, and adoption quality. | `skills/design/design-system-audit.md` |
+| design | evaluation | [UX Heuristic Evaluation](skills/design/ux-heuristic-evaluation.md) | Evaluates product UX against established usability heuristics. | `skills/design/ux-heuristic-evaluation.md` |
+| engineering | review | [API Design Review](skills/engineering/api-design-review.md) | Evaluates API design for consistency, usability, and long-term maintainability. | `skills/engineering/api-design-review.md` |
+| engineering | checklist | [Code Review Checklist](skills/engineering/code-review-checklist.md) | Structured checklist for reviewing code quality, correctness, and delivery risk. | `skills/engineering/code-review-checklist.md` |
+| engineering | analysis | [Incident Postmortem Analysis](skills/engineering/incident-postmortem-analysis.md) | Turns incident timelines into root causes, lessons, and prevention actions. | `skills/engineering/incident-postmortem-analysis.md` |
+| finance | forecasting | [Cash Flow Forecast Scenarios](skills/finance/cash-flow-forecast-scenarios.md) | Builds scenario-based cash flow forecasts for planning and risk control. | `skills/finance/cash-flow-forecast-scenarios.md` |
+| finance | validation | [Financial Model Sanity Check](skills/finance/financial-model-sanity-check.md) | Validates financial model assumptions, formulas, and internal consistency. | `skills/finance/financial-model-sanity-check.md` |
+| finance | analysis | [Unit Economics Analysis](skills/finance/unit-economics-analysis.md) | Calculates unit economics to identify margin drivers and growth constraints. | `skills/finance/unit-economics-analysis.md` |
+| growth | planning | [Go-to-Market Plan](skills/growth/go-to-market-plan.md) | Builds launch strategy, channel sequencing, and execution milestones. | `skills/growth/go-to-market-plan.md` |
+| growth | analysis | [Market Sizing](skills/growth/market-sizing.md) | Estimates TAM, SAM, and SOM with explicit assumptions and confidence ranges. | `skills/growth/market-sizing.md` |
+| growth | evaluation | [Pricing Strategy Evaluator](skills/growth/pricing-strategy-evaluator.md) | Assesses pricing approaches against value capture and growth objectives. | `skills/growth/pricing-strategy-evaluator.md` |
+| legal | assessment | [Contract Risk Assessment](skills/legal/contract-risk-assessment.md) | Identifies legal risk in contracts and recommends negotiation priorities. | `skills/legal/contract-risk-assessment.md` |
+| legal | compliance | [Open Source License Compliance Check](skills/legal/open-source-license-compliance-check.md) | Checks OSS dependency licenses for obligations, conflicts, and remediation. | `skills/legal/open-source-license-compliance-check.md` |
+| legal | analysis | [Privacy Policy Gap Analysis](skills/legal/privacy-policy-gap-analysis.md) | Finds policy coverage gaps versus privacy obligations and operations. | `skills/legal/privacy-policy-gap-analysis.md` |
+| onchain | review | [Protocol Governance Design Review](skills/onchain/protocol-governance-design-review.md) | Evaluates protocol governance mechanics for resilience and capture resistance. | `skills/onchain/protocol-governance-design-review.md` |
+| onchain | audit | [Smart Contract Security Audit](skills/onchain/smart-contract-audit.md) | Reviews smart contract logic for vulnerabilities and deployment risk. | `skills/onchain/smart-contract-audit.md` |
+| onchain | review | [Tokenomics Risk Review](skills/onchain/tokenomics-risk-review.md) | Analyzes token incentive design, supply dynamics, and governance risks. | `skills/onchain/tokenomics-risk-review.md` |
+| ops | triage | [Incident Response Triage](skills/ops/incident-response-triage.md) | Classifies incidents quickly and triggers coordinated response workflows. | `skills/ops/incident-response-triage.md` |
+| ops | documentation | [Runbook Creation](skills/ops/runbook-creation.md) | Transforms operational procedures into executable runbooks. | `skills/ops/runbook-creation.md` |
+| ops | planning | [SLO Planning](skills/ops/slo-planning.md) | Defines SLOs, SLIs, and error budgets aligned to user impact. | `skills/ops/slo-planning.md` |
+| product | prioritization | [Feature Prioritization (RICE)](skills/product/feature-prioritization-rice.md) | Ranks feature candidates using RICE with transparent scoring assumptions. | `skills/product/feature-prioritization-rice.md` |
+| product | planning | [Product Requirements Brief](skills/product/product-requirements-brief.md) | Converts product intent into a clear, testable requirements brief. | `skills/product/product-requirements-brief.md` |
+| product | planning | [User Story Mapping](skills/product/user-story-mapping.md) | Maps user journeys into release slices and implementation-ready stories. | `skills/product/user-story-mapping.md` |
+| security | review | [Authentication Flow Review](skills/security/authentication-flow-review.md) | Assesses auth and session flows for security, UX, and reliability gaps. | `skills/security/authentication-flow-review.md` |
+| security | assessment | [Third-Party Vendor Security Review](skills/security/third-party-vendor-security-review.md) | Evaluates third-party vendors for security posture and integration risk. | `skills/security/third-party-vendor-security-review.md` |
+| security | modeling | [Threat Modeling (STRIDE)](skills/security/threat-modeling-stride.md) | Identifies and prioritizes system threats using STRIDE methodology. | `skills/security/threat-modeling-stride.md` |
 
-This repository includes example skills demonstrating the specification:
+<!-- SKILL_CATALOG_END -->
 
-- **growth/market-sizing.md** - TAM/SAM/SOM calculation framework
-- **engineering/code-review-checklist.md** - Structured code review process
-- **data/exploratory-analysis.md** - Data profiling and initial analysis
-- **legal/contract-risk-assessment.md** - Contract review framework
-- **onchain/smart-contract-audit.md** - Blockchain smart contract security review
+## Validation
 
-## Philosophy
+Run local checks before publishing or opening a PR:
 
-Skills represent **encoded expertise** rather than simple automation. They:
+```bash
+python3 scripts/validate_skills.py
+python3 scripts/sync_readme_catalog.py --check
+```
 
-- Capture decision-making patterns from experienced practitioners
-- Provide guardrails and constraints to prevent common mistakes
-- Generate outputs that can feed into other skills or systems
-- Evolve based on real-world usage and feedback
+## Contributing and Governance
+
+- Contribution guide: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- Code of conduct: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+- Security policy: [`SECURITY.md`](SECURITY.md)
+- Changelog: [`CHANGELOG.md`](CHANGELOG.md)
 
 ## License
 
-This repository is open-source and available under the MIT License. Contributions are welcome!
+MIT. See [`LICENSE`](LICENSE).
