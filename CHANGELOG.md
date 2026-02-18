@@ -8,6 +8,12 @@ This project follows Keep a Changelog principles and Semantic Versioning.
 
 ### Added
 
+- Placeholder for upcoming changes.
+
+## [1.0.1] - 2026-02-18
+
+### Added
+
 - Hardened 25 newly added skills with domain-specific inputs, outputs, constraints, and realistic invocation examples.
 
 ### Changed
@@ -24,5 +30,6 @@ This project follows Keep a Changelog principles and Semantic Versioning.
 - Added OSS governance docs: LICENSE, CONTRIBUTING, CODE_OF_CONDUCT, and SECURITY.
 - Added CI workflow for skill validation and README catalog sync checks.
 
-[Unreleased]: https://github.com/danhdox/skill-base/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/danhdox/skill-base/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/danhdox/skill-base/releases/tag/v1.0.1
 [1.0.0]: https://github.com/danhdox/skill-base/releases/tag/v1.0.0
